@@ -1,11 +1,3 @@
-## link function between T(gamma) and eta(gamma)
-link_Tgamma <- function(Tfun){
-    function(gamma){
-        denom <- Tfun(gamma)^2 + (sqrt(gamma) + 1 / sqrt(gamma))^2
-        1 / 2 - sqrt(1 / 4 - 1 / denom)
-    }
-}
-
 ## h function and inverse of h
 h <- function(y){
     (1 + y) * log(1 + y) - y
@@ -33,18 +25,12 @@ uniroot2 <- function(fun, val, grid, type = "lower"){
     }
 }
 
-## Empirical Bennett's bound
-eta_EBenn <- function(T, score, delta){
-    T <- clean_format_treat(T)    
-    score1 <- score[T]
-    score0 <- score[!T]
-    m1 <- sum(T)
-    m0 <- sum(!T)
-    delta_mu1 <- delta / 4
-    delta_sigma1 <- delta / 4    
-    delta_mu0 <- delta / 4
-    delta_sigma0 <- delta / 4
-    
+## Confidence bound for T0 and T1
+Tstats_bound <- function(score1, score0,
+                         delta_mu1, delta_mu0,
+                         delta_sigma1, delta_sigma0){
+    m1 <- length(score1)
+    m0 <- length(score0)
     mu1 <- mean(score1)
     mu0 <- mean(score0)
     sigma1 <- sd(score1)
@@ -84,17 +70,39 @@ eta_EBenn <- function(T, score, delta){
     if (is.na(mu0_hat)){
         mu0_hat <- mu0_hat_upper
     }
+
+    mu_diff <- max(mu1_hat - mu0_hat, 0)
+    T1 <- mu_diff / sigma1_hat
+    T0 <- mu_diff / sigma0_hat
+    return(list(T1 = T1, T0 = T0))
+}
+
+## Empirical Bennett's bound
+eta_EBenn <- function(T, score, delta){
+    T <- clean_format_treat(T)    
+    score1 <- score[T]
+    score0 <- score[!T]
+    delta_mu1 <- delta / 4
+    delta_sigma1 <- delta / 4    
+    delta_mu0 <- delta / 4
+    delta_sigma0 <- delta / 4
     
-    if (mu1_hat <= mu0_hat){
-        TBenn <- function(gamma){0}
-    } else {
-        TBenn <- function(gamma){
-            term1 <- pmax(sqrt(gamma) / sigma0_hat,
-                          1 / sqrt(gamma) / sigma1_hat)
-            term2 <- mu1_hat - mu0_hat
-            term1 * term2
-        }
+    Tstats <- Tstats_bound(score1, score0,
+                           delta_mu1, delta_mu0,
+                           delta_sigma1, delta_sigma0)
+    T1 <- Tstats$T1
+    T0 <- Tstats$T0
+    eta_fun <- function(gamma, type){
+        eta_ATC <- gamma / (T1^2 + 1 + gamma)
+        eta_ATT <- 1 / (gamma * (T0^2 + 1) + 1)
+        Tgamma <- pmax(T0 * sqrt(gamma), T1 / sqrt(gamma))
+        denom <- Tgamma^2 + (sqrt(gamma) + 1 / sqrt(gamma))^2
+        eta_ATE <- 1 / 2 - sqrt(1 / 4 - 1 / denom)
+        eta <- switch(type,
+                      ATE = eta_ATE,
+                      ATT = eta_ATT,
+                      ATC = eta_ATC)
+        return(eta)        
     }
-    eta_fun <- link_Tgamma(TBenn)
     return(eta_fun)
 }

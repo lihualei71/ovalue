@@ -22,15 +22,17 @@
 #' @param formula a formula object. See Details
 #' @param data a data.frame. See Details
 #' @param alpha numeric. Confidence level
+#' @param type a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"
 #' @param scorefun a string or a function. See Details
 #' @param trainprop numeric. Proportion of training samples
 #' @param nreps an integer. Number of times for data splitting
 #' @param verbose logical. Indicate whether relevant information is outputted to the console
+#' @param return_list logical. Indicate whether the O-values for each split are returned.
 #' @param ... Other arguments passed into \code{scorefun}
 #'
 #' @return
-#' \item{eta}{ median of O-values for all splitted data.}
-#' \item{etalist}{ list of O-values for all splitted data.}
+#' \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
+#' \item{etalist}{ optional (only returned when \code{return_list = TRUE}). List of O-values for each splitted data. Each entry corresponds to a type of overlap condition.}
 #' 
 #' @examples
 #' \donttest{# Generate data from a logistic model
@@ -56,10 +58,12 @@
 ovalue <- function(T = NULL, X = NULL,
                    formula = NULL, data = NULL,
                    alpha = 0.05,
+                   type = c("ATE", "ATT", "ATC"),
                    scorefun = "rf",
                    trainprop = 0.5,
                    nreps = 50,
                    verbose = TRUE,
+                   return_list = FALSE,
                    ...){
     eta_gen_fun <- eta_hybrid
     scorefun <- clean_format_scorefun(scorefun)
@@ -86,7 +90,10 @@ ovalue <- function(T = NULL, X = NULL,
     gamma_grid <- seq(gamma_ci[1], gamma_ci[2],
                       length.out = 1000)
 
-    eta_list <- rep(NA, nreps)
+    eta_list <- list()
+    for (tp in type){
+        eta_list[[tp]] <- rep(NA, nreps)
+    }
     nfails <- 0
     if (verbose){
         cat("Fitting the scores\n")
@@ -100,7 +107,9 @@ ovalue <- function(T = NULL, X = NULL,
         score <- scorefun(T, X, trainid)
         Ttest <- T[-trainid]
         eta_fun <- eta_gen_fun(Ttest, score, delta_others)
-        eta_list[i] <- max(eta_fun(gamma_grid))
+        for (tp in type){
+            eta_list[[tp]][i] <- max(eta_fun(gamma_grid, tp))
+        }
         if (verbose){
             setTxtProgressBar(pb, i)
         }
@@ -112,7 +121,11 @@ ovalue <- function(T = NULL, X = NULL,
     if (nfails > 0){
         warning(paste0(nfails, " replicates involve only one class in the training set."))
     }
-    
-    return(list(eta = median(eta_list),
-                etalist = eta_list))
+
+    eta <- lapply(eta_list, median)
+    if (return_list){
+        return(c(eta, list(etalist = eta_list)))
+    } else {
+        return(eta)
+    }
 }

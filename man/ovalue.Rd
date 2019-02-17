@@ -5,8 +5,9 @@
 \title{O-values of Observational Studies}
 \usage{
 ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
-  alpha = 0.05, scorefun = "rf", trainprop = 0.5, nreps = 50,
-  verbose = TRUE, ...)
+  alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefun = "rf",
+  trainprop = 0.5, nreps = 50, verbose = TRUE, return_list = FALSE,
+  ...)
 }
 \arguments{
 \item{T}{a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
@@ -19,6 +20,8 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 
 \item{alpha}{numeric. Confidence level}
 
+\item{type}{a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"}
+
 \item{scorefun}{a string or a function. See Details}
 
 \item{trainprop}{numeric. Proportion of training samples}
@@ -27,11 +30,13 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 
 \item{verbose}{logical. Indicate whether relevant information is outputted to the console}
 
+\item{return_list}{logical. Indicate whether the O-values for each split are returned.}
+
 \item{...}{Other arguments passed into \code{scorefun}}
 }
 \value{
-\item{eta}{ median of O-values for all splitted data.}
-\item{etalist}{ list of O-values for all splitted data.}
+\item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
+\item{etalist}{ optional (only returned when \code{return_list = TRUE}). List of O-values for each splitted data. Each entry corresponds to a type of overlap condition.}
 }
 \description{
 \code{ovalue} is a framework to calculate O-values of observational studies allowing for arbitrary classifiers to calculate 1-d scores.

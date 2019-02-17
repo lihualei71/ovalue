@@ -31,10 +31,15 @@ eta_ROC <- function(T, score, delta){
         c(0, 1), maximum = TRUE)$objective)
     nu_plus <- max(nu_plus1, nu_plus2)
 
-    eta_fun <- function(gamma){
-        eta_minus <- 1 - 1 / (1 + gamma * nu_minus)
-        eta_plus <- 1 / (1 + gamma * nu_plus)
-        pmin(eta_minus, eta_plus)
+    eta_fun <- function(gamma, type){
+        eta_ATC <- 1 - 1 / (1 + gamma * nu_minus)
+        eta_ATT <- 1 / (1 + gamma * nu_plus)
+        eta_ATE <- pmin(eta_ATC, eta_ATT)
+        eta <- switch(type,
+                      ATE = eta_ATE,
+                      ATT = eta_ATT,
+                      ATC = eta_ATC)
+        return(eta)
     }
     return(eta_fun)
 }
