@@ -59,14 +59,17 @@ ovalue <- function(T = NULL, X = NULL,
                    formula = NULL, data = NULL,
                    alpha = 0.05,
                    type = c("ATE", "ATT", "ATC"),
-                   scorefun = "rf",
+                   scorefuns = c("rf", "gbm"),
+                   sw = rep(1, length(scorefuns)),
+                   methods = c("ROC", "EBenn"),
+                   mw = rep(1, length(scorefuns)),
                    trainprop = 0.5,
                    nreps = 50,
                    verbose = TRUE,
                    return_list = FALSE,
                    ...){
-    eta_gen_fun <- eta_hybrid
-    scorefun <- clean_format_scorefun(scorefun)
+    eta_gen_fun <- eta_hybrid(methods, mw)
+    scorefuns <- lapply(scorefuns, clean_format_scorefun)
 
     if (is.null(T)){
         if (is.null(formula)){
@@ -85,18 +88,20 @@ ovalue <- function(T = NULL, X = NULL,
     n <- length(T)
     ntrain <- ceiling(n * trainprop)
     delta_gamma <- alpha / 10
-    delta_others <- alpha - delta_gamma
+    delta_others <- (alpha - delta_gamma) * sw / sum(sw)
     gamma_ci <- gamma_CI(T, delta_gamma)
     gamma_grid <- seq(gamma_ci[1], gamma_ci[2],
                       length.out = 1000)
 
     eta_list <- list()
     for (tp in type){
-        eta_list[[tp]] <- rep(NA, nreps)
+        for (j in 1:length(scorefuns)){
+            eta_list[[tp]][[j]] <- rep(NA, nreps)
+        }
     }
     nfails <- 0
     if (verbose){
-        cat("Fitting the scores\n")
+        cat("Computing O-values for each data splits\n")
         pb <- txtProgressBar(min = 0, max = nreps, style = 3, width = 50)
     }
     for (i in 1:nreps){
@@ -104,11 +109,14 @@ ovalue <- function(T = NULL, X = NULL,
         if (sum(T[trainid]) %in% c(0, n)){
             nfails <- nfails + 1
         }
-        score <- scorefun(T, X, trainid)
-        Ttest <- T[-trainid]
-        eta_fun <- eta_gen_fun(Ttest, score, delta_others)
-        for (tp in type){
-            eta_list[[tp]][i] <- max(eta_fun(gamma_grid, tp))
+        for (j in 1:length(scorefuns)){
+            scorefun <- scorefuns[[j]]
+            score <- scorefun(T, X, trainid)
+            Ttest <- T[-trainid]
+            eta_fun <- eta_gen_fun(Ttest, score, delta_others[j])
+            for (tp in type){
+                eta_list[[tp]][[j]][i] <- max(eta_fun(gamma_grid, tp))
+            }
         }
         if (verbose){
             setTxtProgressBar(pb, i)
@@ -122,7 +130,10 @@ ovalue <- function(T = NULL, X = NULL,
         warning(paste0(nfails, " replicates involve only one class in the training set."))
     }
 
-    eta <- lapply(eta_list, median)
+    eta <- lapply(eta_list, function(x){
+        temp <- lapply(x, median)
+        min(unlist(temp))
+    })
     if (return_list){
         return(c(eta, list(etalist = eta_list)))
     } else {

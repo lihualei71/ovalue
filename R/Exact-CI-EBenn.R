@@ -5,7 +5,7 @@ h <- function(y){
 
 hinv <- function(z){
     ## h(y) <= y^2; h(y) >= y + 2 for any y >= e^2 - 1
-    interval <- c(sqrt(z), max(z - 2, exp(2) - 1))
+    interval <- c(0, max(z - 2, exp(2) - 1) + 1e-2)
     uniroot(function(y){h(y) - z}, interval)$root
 }
 hinv <- Vectorize(hinv)
@@ -83,19 +83,22 @@ eta_EBenn <- function(T, score, delta){
     score1 <- score[T]
     score0 <- score[!T]
     delta_mu1 <- delta / 4
-    delta_sigma1 <- delta / 4    
     delta_mu0 <- delta / 4
-    delta_sigma0 <- delta / 4
+    delta_sigma <- delta / 2
     
-    Tstats <- Tstats_bound(score1, score0,
-                           delta_mu1, delta_mu0,
-                           delta_sigma1, delta_sigma0)
-    T1 <- Tstats$T1
-    T0 <- Tstats$T0
+    Tstats_ATE <- Tstats_bound(score1, score0,
+                               delta_mu1, delta_mu0,
+                               delta_sigma / 2, delta_sigma / 2
+                               )
+    Tstats_ATTC <- Tstats_bound(score1, score0,
+                                delta_mu1, delta_mu0,
+                                delta_sigma, delta_sigma)
+
     eta_fun <- function(gamma, type){
-        eta_ATC <- gamma / (T1^2 + 1 + gamma)
-        eta_ATT <- 1 / (gamma * (T0^2 + 1) + 1)
-        Tgamma <- pmax(T0 * sqrt(gamma), T1 / sqrt(gamma))
+        eta_ATC <- gamma / (Tstats_ATTC$T1^2 + 1 + gamma)
+        eta_ATT <- 1 / (gamma * (Tstats_ATTC$T0^2 + 1) + 1)
+        Tgamma <- pmax(Tstats_ATE$T0 * sqrt(gamma),
+                       Tstats_ATE$T1 / sqrt(gamma))
         denom <- Tgamma^2 + (sqrt(gamma) + 1 / sqrt(gamma))^2
         eta_ATE <- 1 / 2 - sqrt(1 / 4 - 1 / denom)
         eta <- switch(type,

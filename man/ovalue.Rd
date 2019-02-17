@@ -5,9 +5,10 @@
 \title{O-values of Observational Studies}
 \usage{
 ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
-  alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefun = "rf",
-  trainprop = 0.5, nreps = 50, verbose = TRUE, return_list = FALSE,
-  ...)
+  alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefuns = c("rf",
+  "gbm"), sw = rep(1, length(scorefuns)), methods = c("ROC", "EBenn"),
+  mw = rep(1, length(scorefuns)), trainprop = 0.5, nreps = 50,
+  verbose = TRUE, return_list = FALSE, ...)
 }
 \arguments{
 \item{T}{a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
@@ -22,8 +23,6 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 
 \item{type}{a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"}
 
-\item{scorefun}{a string or a function. See Details}
-
 \item{trainprop}{numeric. Proportion of training samples}
 
 \item{nreps}{an integer. Number of times for data splitting}
@@ -33,6 +32,8 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 \item{return_list}{logical. Indicate whether the O-values for each split are returned.}
 
 \item{...}{Other arguments passed into \code{scorefun}}
+
+\item{scorefun}{a string or a function. See Details}
 }
 \value{
 \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
