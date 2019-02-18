@@ -1,7 +1,7 @@
 eta_ROC <- function(T, score, delta){
     T <- clean_format_treat(T)
-    score1 <- score[T]
-    score0 <- score[!T]
+    score1 <- score[T == 1]
+    score0 <- score[T == 0]
     m1 <- sum(T)
     m0 <- sum(!T)
     delta1 <- delta / 2

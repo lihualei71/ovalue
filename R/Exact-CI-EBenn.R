@@ -80,8 +80,8 @@ Tstats_bound <- function(score1, score0,
 ## Empirical Bennett's bound
 eta_EBenn <- function(T, score, delta){
     T <- clean_format_treat(T)    
-    score1 <- score[T]
-    score0 <- score[!T]
+    score1 <- score[T == 1]
+    score0 <- score[T == 0]
     delta_mu1 <- delta / 4
     delta_mu0 <- delta / 4
     delta_sigma <- delta / 2
