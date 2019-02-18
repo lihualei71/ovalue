@@ -1,7 +1,11 @@
 eta_methods_map <- function(method){
-    switch(method,
-           ROC = eta_ROC,
-           EBenn = eta_EBenn)
+    if (is.function(method)){
+        method
+    } else {
+        switch(method,
+               ROC = eta_ROC,
+               EBenn = eta_EBenn)
+    }
 }
 
 eta_hybrid <- function(methods, weights){

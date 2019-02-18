@@ -23,6 +23,14 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 
 \item{type}{a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"}
 
+\item{scorefuns}{a vector of strings or functions. See Details}
+
+\item{sw}{a vector of non-negative numbers. See Details}
+
+\item{methods}{a vector of strings or functions. See Details}
+
+\item{mw}{a vector of non-negative numbers. See Details}
+
 \item{trainprop}{numeric. Proportion of training samples}
 
 \item{nreps}{an integer. Number of times for data splitting}
@@ -32,8 +40,6 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 \item{return_list}{logical. Indicate whether the O-values for each split are returned.}
 
 \item{...}{Other arguments passed into \code{scorefun}}
-
-\item{scorefun}{a string or a function. See Details}
 }
 \value{
 \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
@@ -43,23 +49,42 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 \code{ovalue} is a framework to calculate O-values of observational studies allowing for arbitrary classifiers to calculate 1-d scores.
 }
 \details{
-\code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. For the former, \code{scorefun} can be a valid string, including
+\code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method.
+
+Each element of \code{scorefuns} can be a valid string, including
 \itemize{
 \item "logistic" for logistic regression,
 \item "lasso" for L1-penalized logistic regression,
 \item "gam" for generalized additive model,
 \item "gbm" for generalized boosting machine,
-\item "rf" for random forest.
+\item "rf" for random forest,
 }
 
-For the latter, \code{scorefun} can be a function object whose inputs must include
+or a function object whose inputs must include
 \itemize{
 \item "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 \item "X" for covariates, must be a vector/matrix/data.frame,
 \item "trainid" for the index of training samples, must be a logical vector or a vector of integers.
+The default setting is \code{scorefuns = c("rf", "gbm"), sw = c(1, 1)}.
 }
 
 \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
+
+Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test.
+
+Each element of \code{methods} can be a valid string, including
+\itemize{
+\item "ROC" for ROC bound,
+\item "EBenn" for \eqn{$\chi^2$} bound based on Empirical Bennett inequality,
+}
+
+or a function object whose inputs must include
+\itemize{
+\item "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
+\item "score" for the univariate scores, must be a vector with the same length as "T",
+\item "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
+The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
+}
 }
 \examples{
 \donttest{# Generate data from a logistic model

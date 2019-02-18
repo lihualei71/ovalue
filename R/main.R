@@ -2,19 +2,35 @@
 #'
 #' \code{ovalue} is a framework to calculate O-values of observational studies allowing for arbitrary classifiers to calculate 1-d scores.
 #'
-#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. For the former, \code{scorefun} can be a valid string, including
+#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method. 
+#'
+#' Each element of \code{scorefuns} can be a valid string, including
 #' * "logistic" for logistic regression,
 #' * "lasso" for L1-penalized logistic regression,
 #' * "gam" for generalized additive model,
 #' * "gbm" for generalized boosting machine,
-#' * "rf" for random forest.
+#' * "rf" for random forest,
 #' 
-#' For the latter, \code{scorefun} can be a function object whose inputs must include
+#' or a function object whose inputs must include
 #' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 #' * "X" for covariates, must be a vector/matrix/data.frame,
 #' * "trainid" for the index of training samples, must be a logical vector or a vector of integers.
+#' The default setting is \code{scorefuns = c("rf", "gbm"), sw = c(1, 1)}.
 #'
-#' \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.  
+#' \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
+#'
+#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test. 
+#'
+#' Each element of \code{methods} can be a valid string, including
+#' * "ROC" for ROC bound,
+#' * "EBenn" for \eqn{$\chi^2$} bound based on Empirical Bennett inequality,
+#'
+#' or a function object whose inputs must include
+#' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
+#' * "score" for the univariate scores, must be a vector with the same length as "T",
+#' * "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
+#' The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
+#' 
 #' @md
 #'
 #' @param T a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment
@@ -23,7 +39,10 @@
 #' @param data a data.frame. See Details
 #' @param alpha numeric. Confidence level
 #' @param type a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"
-#' @param scorefun a string or a function. See Details
+#' @param scorefuns a vector of strings or functions. See Details
+#' @param sw a vector of non-negative numbers. See Details
+#' @param methods a vector of strings or functions. See Details
+#' @param mw a vector of non-negative numbers. See Details
 #' @param trainprop numeric. Proportion of training samples
 #' @param nreps an integer. Number of times for data splitting
 #' @param verbose logical. Indicate whether relevant information is outputted to the console
