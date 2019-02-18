@@ -2,7 +2,7 @@
 #'
 #' \code{ovalue} is a framework to calculate O-values of observational studies allowing for arbitrary classifiers to calculate 1-d scores.
 #'
-#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method.
+#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method. 
 #'
 #' Each element of \code{scorefuns} can be a valid string, including
 #' * "logistic" for logistic regression,
@@ -10,7 +10,7 @@
 #' * "gam" for generalized additive model,
 #' * "gbm" for generalized boosting machine,
 #' * "rf" for random forest,
-#'
+#' 
 #' or a function object whose inputs must include
 #' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 #' * "X" for covariates, must be a vector/matrix/data.frame,
@@ -19,7 +19,7 @@
 #'
 #' \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
 #'
-#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test.
+#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test. 
 #'
 #' Each element of \code{methods} can be a valid string, including
 #' * "ROC" for ROC bound,
@@ -30,7 +30,7 @@
 #' * "score" for the univariate scores, must be a vector with the same length as "T",
 #' * "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
 #' The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
-#'
+#' 
 #' @md
 #'
 #' @param T a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment
@@ -43,6 +43,7 @@
 #' @param sw a vector of non-negative numbers. See Details
 #' @param methods a vector of strings or functions. See Details
 #' @param mw a vector of non-negative numbers. See Details
+#' @param datasplit logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.
 #' @param trainprop numeric. Proportion of training samples
 #' @param nreps an integer. Number of times for data splitting
 #' @param verbose logical. Indicate whether relevant information is outputted to the console
@@ -52,7 +53,7 @@
 #' @return
 #' \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
 #' \item{etalist}{ optional (only returned when \code{return_list = TRUE}). List of O-values for each splitted data. Each entry corresponds to a type of overlap condition.}
-#'
+#' 
 #' @examples
 #' \donttest{# Generate data from a logistic model
 #' set.seed(1)
@@ -72,7 +73,7 @@
 #' set.seed(1)
 #' ovalue(formula = T ~ ., data = data, scorefun = "gbm")
 #' }
-#'
+#' 
 #' @export
 ovalue <- function(T = NULL, X = NULL,
                    formula = NULL, data = NULL,
@@ -82,11 +83,19 @@ ovalue <- function(T = NULL, X = NULL,
                    sw = rep(1, length(scorefuns)),
                    methods = c("ROC", "EBenn"),
                    mw = rep(1, length(methods)),
+                   datasplit = TRUE,
                    trainprop = 0.5,
                    nreps = 50,
                    verbose = TRUE,
                    return_list = FALSE,
                    ...){
+    if (!datasplit){
+        cat("Warning: there is no theoretical guarantee on Type-I error control without data splitting. \n")
+        nreps <- 1
+    }
+    
+    oldw <- getOption("warn")
+    options(warn = -1)
     eta_gen_fun <- eta_hybrid(methods, mw)
     scorefuns <- lapply(scorefuns, clean_format_scorefun)
 
@@ -124,14 +133,20 @@ ovalue <- function(T = NULL, X = NULL,
         pb <- txtProgressBar(min = 0, max = nreps, style = 3, width = 50)
     }
     for (i in 1:nreps){
-        trainid <- sample(n, ntrain)
-        if (sum(T[trainid]) %in% c(0, n)){
+        if (datasplit){
+            trainid <- sample(n, ntrain)
+            testid <- setdiff(1:n, trainid)
+        } else {
+            trainid <- testid <- 1:n
+        }
+        if (sum(T[trainid]) == 0 || sum(T[testid]) == 0){
             nfails <- nfails + 1
+            next
         }
         for (j in 1:length(scorefuns)){
             scorefun <- scorefuns[[j]]
-            score <- scorefun(T, X, trainid)
-            Ttest <- T[-trainid]
+            score <- scorefun(T, X, trainid, testid, ...)
+            Ttest <- T[testid]
             eta_fun <- eta_gen_fun(Ttest, score, delta_others[j])
             for (tp in type){
                 eta_list[[tp]][[j]][i] <- max(eta_fun(gamma_grid, tp))
@@ -142,17 +157,19 @@ ovalue <- function(T = NULL, X = NULL,
         }
     }
 
-    if (verbose){
+    if (verbose){    
         cat("\n")
     }
     if (nfails > 0){
-        warning(paste0(nfails, " replicates involve only one class in the training set."))
+        warning(paste0(nfails, " replicates involve only one class in the training or the testing set."))
     }
 
     eta <- lapply(eta_list, function(x){
         temp <- lapply(x, median)
         min(unlist(temp))
     })
+    options(warn = oldw)
+    
     if (return_list){
         return(c(eta, list(etalist = eta_list)))
     } else {

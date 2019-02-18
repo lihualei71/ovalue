@@ -1,7 +1,8 @@
-score_Boosting <- function(T, X, trainid,
+score_Boosting <- function(T, X, trainid, testid,
                            n.trees = 100,
                            ...){
     T <- clean_format_treat(T)
+    
     if (class(X) == c("numeric")){
         X <- as.matrix(X)
     }
@@ -18,6 +19,6 @@ score_Boosting <- function(T, X, trainid,
     mod <- gbm::gbm(T ~ ., distribution = "bernoulli",
                     data = data[trainid, ],
                     n.trees = n.trees)
-    score <- predict(mod, newdata = data[-trainid, ], type = "response", n.trees = n.trees)
+    score <- predict(mod, newdata = data[testid, ], type = "response", n.trees = n.trees)
     return(as.numeric(score))
 }

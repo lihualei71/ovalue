@@ -1,4 +1,4 @@
-score_LassoLogisticReg <- function(T, X, trainid,
+score_LassoLogisticReg <- function(T, X, trainid, testid,
                                    lambdatype = "lambda.min",
                                    ...){
     T <- clean_format_treat(T)
@@ -14,7 +14,7 @@ score_LassoLogisticReg <- function(T, X, trainid,
     if (any(as.numeric(table(Ttrain)) == 0)){
         stop("The training set only includes data from one class. Check if the original data is highly unbalanced or change the random seed for data splitting.")
     }
-    Xtest <- X[-trainid, , drop = FALSE]
+    Xtest <- X[testid, , drop = FALSE]
     
     mod <- glmnet::cv.glmnet(Xtrain, Ttrain, family = "binomial", ...)
     score <- predict(mod, newx = Xtest, type = "response",

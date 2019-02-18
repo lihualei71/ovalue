@@ -1,13 +1,13 @@
-score_GAM <- function(T, X, trainid,
+score_GAM <- function(T, X, trainid, testid,
                       ...){
-    T <- clean_format_treat(T)
+    T <- clean_format_treat(T)    
     if (class(X) == c("numeric")){
         X <- as.matrix(X)
     }
     if (is.logical(trainid)){
         trainid <- which(trainid)
     }
-
+    
     data <- data.frame(T = T, X)
     Ttrain <- as.factor(T[trainid])
     if (any(as.numeric(table(Ttrain)) == 0)){
@@ -15,6 +15,6 @@ score_GAM <- function(T, X, trainid,
     }
     
     mod <- gam::gam(T ~ ., family = "binomial", data = data[trainid, ])
-    score <- predict(mod, newdata = data[-trainid, ], type = "response")
+    score <- predict(mod, newdata = data[testid, ], type = "response")
     return(as.numeric(score))
 }

@@ -7,8 +7,8 @@
 ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
   alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefuns = c("rf",
   "gbm"), sw = rep(1, length(scorefuns)), methods = c("ROC", "EBenn"),
-  mw = rep(1, length(methods)), trainprop = 0.5, nreps = 50,
-  verbose = TRUE, return_list = FALSE, ...)
+  mw = rep(1, length(methods)), datasplit = TRUE, trainprop = 0.5,
+  nreps = 50, verbose = TRUE, return_list = FALSE, ...)
 }
 \arguments{
 \item{T}{a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
@@ -30,6 +30,8 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 \item{methods}{a vector of strings or functions. See Details}
 
 \item{mw}{a vector of non-negative numbers. See Details}
+
+\item{datasplit}{logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.}
 
 \item{trainprop}{numeric. Proportion of training samples}
 
