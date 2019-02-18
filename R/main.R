@@ -2,7 +2,7 @@
 #'
 #' \code{ovalue} is a framework to calculate O-values of observational studies allowing for arbitrary classifiers to calculate 1-d scores.
 #'
-#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method. 
+#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method.
 #'
 #' Each element of \code{scorefuns} can be a valid string, including
 #' * "logistic" for logistic regression,
@@ -10,7 +10,7 @@
 #' * "gam" for generalized additive model,
 #' * "gbm" for generalized boosting machine,
 #' * "rf" for random forest,
-#' 
+#'
 #' or a function object whose inputs must include
 #' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 #' * "X" for covariates, must be a vector/matrix/data.frame,
@@ -19,7 +19,7 @@
 #'
 #' \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
 #'
-#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test. 
+#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test.
 #'
 #' Each element of \code{methods} can be a valid string, including
 #' * "ROC" for ROC bound,
@@ -30,7 +30,7 @@
 #' * "score" for the univariate scores, must be a vector with the same length as "T",
 #' * "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
 #' The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
-#' 
+#'
 #' @md
 #'
 #' @param T a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment
@@ -52,7 +52,7 @@
 #' @return
 #' \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
 #' \item{etalist}{ optional (only returned when \code{return_list = TRUE}). List of O-values for each splitted data. Each entry corresponds to a type of overlap condition.}
-#' 
+#'
 #' @examples
 #' \donttest{# Generate data from a logistic model
 #' set.seed(1)
@@ -72,7 +72,7 @@
 #' set.seed(1)
 #' ovalue(formula = T ~ ., data = data, scorefun = "gbm")
 #' }
-#' 
+#'
 #' @export
 ovalue <- function(T = NULL, X = NULL,
                    formula = NULL, data = NULL,
@@ -142,7 +142,7 @@ ovalue <- function(T = NULL, X = NULL,
         }
     }
 
-    if (verbose){    
+    if (verbose){
         cat("\n")
     }
     if (nfails > 0){

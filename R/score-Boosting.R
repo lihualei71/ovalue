@@ -16,7 +16,8 @@ score_Boosting <- function(T, X, trainid,
     }
     
     mod <- gbm::gbm(T ~ ., distribution = "bernoulli",
-                    data = data, n.trees = n.trees)
+                    data = data[trainid, ],
+                    n.trees = n.trees)
     score <- predict(mod, newdata = data[-trainid, ], type = "response", n.trees = n.trees)
     return(as.numeric(score))
 }
