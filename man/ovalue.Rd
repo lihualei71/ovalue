@@ -7,7 +7,7 @@
 ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
   alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefuns = c("rf",
   "gbm"), sw = rep(1, length(scorefuns)), methods = c("ROC", "EBenn"),
-  mw = rep(1, length(scorefuns)), trainprop = 0.5, nreps = 50,
+  mw = rep(1, length(methods)), trainprop = 0.5, nreps = 50,
   verbose = TRUE, return_list = FALSE, ...)
 }
 \arguments{
