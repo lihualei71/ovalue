@@ -15,6 +15,7 @@
 #' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 #' * "X" for covariates, must be a vector/matrix/data.frame,
 #' * "trainid" for the index of training samples, must be a logical vector or a vector of integers.
+#' * "testid" for the index of testing samples, must be a logical vector or a vector of integers. "testid" is allowed to overlap with "trainid". 
 #' The default setting is \code{scorefuns = c("rf", "gbm"), sw = c(1, 1)}.
 #'
 #' \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
@@ -30,6 +31,8 @@
 #' * "score" for the univariate scores, must be a vector with the same length as "T",
 #' * "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
 #' The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
+#'
+#' Derandomization step is crucial to reduce the external randomness from data splitting. \code{ovalue} calculate O-values for \code{nreps} data splits and report the \code{drq}-th quantile. If the confidence level for each split is \eqn{$\beta$}, it is guaranteed that the coverage is at least \eqn{$\beta / drq$}. To guarantee the coverage in worst case, \code{ovalue} corrects \code{alpha} to \code{alpha} * \code{drq}, if \code{drcorrect = TRUE} by default. In practice, users might awant to avoid this level of correction because each O-value is conservative and the overall coverage will still be guaranteed even without the correction. 
 #' 
 #' @md
 #'
@@ -46,6 +49,8 @@
 #' @param datasplit logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.
 #' @param trainprop numeric. Proportion of training samples
 #' @param nreps an integer. Number of times for data splitting
+#' @param drq numeric. The quantile at which the O-values are reported. See Details
+#' @param drcorrect logical. Indicate whether the confidence level needs to be corrected for derandomization. See Details
 #' @param verbose logical. Indicate whether relevant information is outputted to the console
 #' @param return_list logical. Indicate whether the O-values for each split are returned.
 #' @param ... Other arguments passed into \code{scorefun}
@@ -86,12 +91,17 @@ ovalue <- function(T = NULL, X = NULL,
                    datasplit = TRUE,
                    trainprop = 0.5,
                    nreps = 50,
+                   drq = 0.5,
+                   drcorrect = TRUE,
                    verbose = TRUE,
                    return_list = FALSE,
                    ...){
     if (!datasplit){
         cat("Warning: there is no theoretical guarantee on Type-I error control without data splitting. \n")
         nreps <- 1
+    }
+    if (drcorrect){
+        alpha <- alpha * drq
     }
     
     oldw <- getOption("warn")
@@ -165,7 +175,9 @@ ovalue <- function(T = NULL, X = NULL,
     }
 
     eta <- lapply(eta_list, function(x){
-        temp <- lapply(x, median)
+        temp <- lapply(x, function(y){
+            quantile(y, drq)
+        })
         min(unlist(temp))
     })
     options(warn = oldw)

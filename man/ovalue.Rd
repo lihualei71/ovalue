@@ -8,7 +8,8 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
   alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefuns = c("rf",
   "gbm"), sw = rep(1, length(scorefuns)), methods = c("ROC", "EBenn"),
   mw = rep(1, length(methods)), datasplit = TRUE, trainprop = 0.5,
-  nreps = 50, verbose = TRUE, return_list = FALSE, ...)
+  nreps = 50, drq = 0.5, drcorrect = TRUE, verbose = TRUE,
+  return_list = FALSE, ...)
 }
 \arguments{
 \item{T}{a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
@@ -36,6 +37,10 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 \item{trainprop}{numeric. Proportion of training samples}
 
 \item{nreps}{an integer. Number of times for data splitting}
+
+\item{drq}{numeric. The quantile at which the O-values are reported. See Details}
+
+\item{drcorrect}{logical. Indicate whether the confidence level needs to be corrected for derandomization. See Details}
 
 \item{verbose}{logical. Indicate whether relevant information is outputted to the console}
 
@@ -67,6 +72,7 @@ or a function object whose inputs must include
 \item "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 \item "X" for covariates, must be a vector/matrix/data.frame,
 \item "trainid" for the index of training samples, must be a logical vector or a vector of integers.
+\item "testid" for the index of testing samples, must be a logical vector or a vector of integers. "testid" is allowed to overlap with "trainid".
 The default setting is \code{scorefuns = c("rf", "gbm"), sw = c(1, 1)}.
 }
 
@@ -87,6 +93,8 @@ or a function object whose inputs must include
 \item "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
 The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
 }
+
+Derandomization step is crucial to reduce the external randomness from data splitting. \code{ovalue} calculate O-values for \code{nreps} data splits and report the \code{drq}-th quantile. If the confidence level for each split is \eqn{$\beta$}, it is guaranteed that the coverage is at least \eqn{$\beta / drq$}. To guarantee the coverage in worst case, \code{ovalue} corrects \code{alpha} to \code{alpha} * \code{drq}, if \code{drcorrect = TRUE} by default. In practice, users might awant to avoid this level of correction because each O-value is conservative and the overall coverage will still be guaranteed even without the correction.
 }
 \examples{
 \donttest{# Generate data from a logistic model
