@@ -23,5 +23,7 @@ Suggests:
     dplyr
 RoxygenNote: 6.1.0
 Imports:
+    exactci,
     methods,
-    exactci
+    Rdpack
+RdMacros: Rdpack
