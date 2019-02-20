@@ -171,16 +171,16 @@ ovalue <- function(T = NULL, X = NULL,
         cat("\n")
     }
     if (nfails > 0){
+        options(warn = oldw)
         warning(paste0(nfails, " replicates involve only one class in the training or the testing set."))
     }
 
     eta <- lapply(eta_list, function(x){
         temp <- lapply(x, function(y){
-            quantile(y, drq)
+            quantile(y, drq, na.rm = TRUE)
         })
         min(unlist(temp))
     })
-    options(warn = oldw)
     
     if (return_list){
         return(c(eta, list(etalist = eta_list)))
