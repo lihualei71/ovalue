@@ -27,8 +27,9 @@ clean_format_scorefun <- function(scorefun){
     if (!is.function(scorefun)){
         stop("'scorefun' must be a valid string or a function")
     }
-    if (any(!c("T", "X", "trainid") %in% formalArgs(scorefun))){
-        stop("'scorefun' must be a valid string or a function with inputs (at least) 'T', 'X' and 'trainid'")
+    if (any(!c("T", "X", "trainid", "testid") %in% formalArgs(scorefun))){
+        stop("'scorefun' must be a valid string or a function with inputs (at least) 'T', 'X', 'trainid' and 'testid'")
     }
     return(scorefun)
 }
+

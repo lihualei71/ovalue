@@ -11,5 +11,5 @@ gamma_CI <- function(T, delta){
     pi_ci <- exactci::exactbinomCI(m1, m, conf.level = 1 - delta)
     pi_ci <- as.numeric(pi_ci)
     gamma_ci <- pi_ci / (1 - pi_ci)
-    return(gamma_ci)
+    return(list(pi = pi_ci, gamma = gamma_ci))
 }

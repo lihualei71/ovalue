@@ -12,25 +12,25 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
   return_list = FALSE, ...)
 }
 \arguments{
-\item{T}{a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
+\item{T}{logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
 
-\item{X}{a matrix or a data.frame. Covariate}
+\item{X}{matrix or data.frame. Covariate}
 
-\item{formula}{a formula object. See Details}
+\item{formula}{formula object. See Details}
 
-\item{data}{a data.frame. See Details}
+\item{data}{data.frame. See Details}
 
 \item{alpha}{numeric. Confidence level}
 
-\item{type}{a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"}
+\item{type}{vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"}
 
-\item{scorefuns}{a vector of strings or functions. See Details}
+\item{scorefuns}{vector of strings or functions. See Details}
 
-\item{sw}{a vector of non-negative numbers. See Details}
+\item{sw}{vector of non-negative numbers. See Details}
 
-\item{methods}{a vector of strings or functions. See Details}
+\item{methods}{vector of strings or functions. See Details}
 
-\item{mw}{a vector of non-negative numbers. See Details}
+\item{mw}{vector of non-negative numbers. See Details}
 
 \item{datasplit}{logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.}
 

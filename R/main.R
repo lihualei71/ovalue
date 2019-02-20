@@ -36,16 +36,16 @@
 #' 
 #' @md
 #'
-#' @param T a logical vector or a factor/vector encoded by 0 and 1. Treatment assignment
-#' @param X a matrix or a data.frame. Covariate
-#' @param formula a formula object. See Details
-#' @param data a data.frame. See Details
+#' @param T logical vector or a factor/vector encoded by 0 and 1. Treatment assignment
+#' @param X matrix or data.frame. Covariate
+#' @param formula formula object. See Details
+#' @param data data.frame. See Details
 #' @param alpha numeric. Confidence level
-#' @param type a vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"
-#' @param scorefuns a vector of strings or functions. See Details
-#' @param sw a vector of non-negative numbers. See Details
-#' @param methods a vector of strings or functions. See Details
-#' @param mw a vector of non-negative numbers. See Details
+#' @param type vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"
+#' @param scorefuns vector of strings or functions. See Details
+#' @param sw vector of non-negative numbers. See Details
+#' @param methods vector of strings or functions. See Details
+#' @param mw vector of non-negative numbers. See Details
 #' @param datasplit logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.
 #' @param trainprop numeric. Proportion of training samples
 #' @param nreps an integer. Number of times for data splitting
@@ -127,8 +127,9 @@ ovalue <- function(T = NULL, X = NULL,
     ntrain <- ceiling(n * trainprop)
     delta_gamma <- alpha / 10
     delta_others <- (alpha - delta_gamma) * sw / sum(sw)
-    gamma_ci <- gamma_CI(T, delta_gamma)
-    gamma_grid <- seq(gamma_ci[1], gamma_ci[2],
+    gamma_ci<- gamma_CI(T, delta_gamma)
+    eta0 <- gamma_ci$pi[2]
+    gamma_grid <- seq(gamma_ci$gamma[1], gamma_ci$gamma[2],
                       length.out = 1000)
 
     eta_list <- list()
@@ -179,7 +180,7 @@ ovalue <- function(T = NULL, X = NULL,
         temp <- lapply(x, function(y){
             quantile(y, drq, na.rm = TRUE)
         })
-        min(unlist(temp))
+        min(unlist(temp), eta0)
     })
     
     if (return_list){
