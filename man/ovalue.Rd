@@ -4,12 +4,26 @@
 \alias{ovalue}
 \title{O-values of Observational Studies}
 \usage{
-ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
-  alpha = 0.05, type = c("ATE", "ATT", "ATC"), scorefuns = c("rf",
-  "gbm"), sw = rep(1, length(scorefuns)), methods = c("ROC", "EBenn"),
-  mw = rep(1, length(methods)), datasplit = TRUE, trainprop = 0.5,
-  nreps = 50, drq = 0.5, drcorrect = TRUE, verbose = TRUE,
-  return_list = FALSE, ...)
+ovalue(
+  T = NULL,
+  X = NULL,
+  formula = NULL,
+  data = NULL,
+  alpha = 0.05,
+  type = c("ATE", "ATT", "ATC"),
+  scorefuns = c("rf", "gbm"),
+  sw = rep(1, length(scorefuns)),
+  methods = c("ROC", "EBenn"),
+  mw = rep(1, length(methods)),
+  datasplit = FALSE,
+  trainprop = 0.5,
+  nreps = 50,
+  drq = 0.5,
+  drcorrect = FALSE,
+  verbose = TRUE,
+  return_list = FALSE,
+  ...
+)
 }
 \arguments{
 \item{T}{logical vector or a factor/vector encoded by 0 and 1. Treatment assignment}
@@ -32,7 +46,7 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 
 \item{mw}{vector of non-negative numbers. See Details}
 
-\item{datasplit}{logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.}
+\item{datasplit}{logical. Indicate whether data splitting is performed.}
 
 \item{trainprop}{numeric. Proportion of training samples}
 
@@ -46,7 +60,7 @@ ovalue(T = NULL, X = NULL, formula = NULL, data = NULL,
 
 \item{return_list}{logical. Indicate whether the O-values for each split are returned.}
 
-\item{...}{Other arguments passed into \code{scorefun}}
+\item{...}{Other arguments passed into \code{scorefuns}}
 }
 \value{
 \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
@@ -107,13 +121,13 @@ probs <- 1 / (1 + exp(-X \%*\% beta))
 T <- stats::runif(n) <= probs
 data <- data.frame(T = T, X)
 
-# Calculate the O-value with inputs \\code{T} and \\code{X}
+# Calculate the O-value with inputs \code{T} and \code{X}
 set.seed(1)
-ovalue(T, X, scorefun = "gbm")
+ovalue(T, X, scorefuns = "gbm")
 
-# Calculate the O-value with inputs \\code{formula} and \\code{data}
+# Calculate the O-value with inputs \code{formula} and \code{data}
 set.seed(1)
-ovalue(formula = T ~ ., data = data, scorefun = "gbm")
+ovalue(formula = T ~ ., data = data, scorefuns = "gbm")
 }
 
 }

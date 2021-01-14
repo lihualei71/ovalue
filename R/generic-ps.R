@@ -9,8 +9,8 @@
 #' * \code{foldsizes}: a vector of positive integers that sum up to n. \code{propensityScore} will generate a uniformly random partition with sizes given by the elements of \code{foldsizes},
 #' * \code{nfolds}: a positive integer. \code{propensityScore} will generate a uniformly random partition with \code{nfolds} folds and equal sizes (up to 1) within each fold.
 #'
-#' 
-#' 
+#'
+#'
 #' \code{propensityScore} supports a bunch of algorithms and provides a flexible framework that allows for arbitrary classifiers. The algorithm to use is specified by the argument \code{algo}. \code{algo} can be a valid string, including
 #' * "logistic" for logistic regression,
 #' * "lasso" for L1-penalized logistic regression,
@@ -22,11 +22,11 @@
 #' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 #' * "X" for covariates, must be a vector/matrix/data.frame,
 #' * "trainid" for the index of training samples, must be a logical vector or a vector of integers.
-#' * "testid" for the index of testing samples, must be a logical vector or a vector of integers. "testid" is allowed to overlap with "trainid". 
+#' * "testid" for the index of testing samples, must be a logical vector or a vector of integers. "testid" is allowed to overlap with "trainid".
 #' The default setting is \code{algo = "gbm"}.
 #'
 #' \code{propensityScore} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
-#' 
+#'
 #' @md
 #'
 #' @param T logical vector or factor/vector encoded by 0 and 1. Treatment assignment
@@ -41,7 +41,7 @@
 #'
 #' @return
 #' A vector of propensity scores
-#' 
+#'
 #' @examples
 #' \donttest{# Generate data from a logistic model
 #' set.seed(1)
@@ -49,7 +49,7 @@
 #' p <- 50
 #' X <- matrix(stats::rnorm(n * p), n, p)
 #' beta <- rep(1 / sqrt(p), p)
-#' probs <- 1 / (1 + exp(-X %*% beta))
+#' probs <- 1 / (1 + exp(-X \%*\% beta))
 #' T <- stats::runif(n) <= probs
 #' data <- data.frame(T = T, X)
 #'
@@ -59,7 +59,7 @@
 #' # Calculate propensity scores using GBM without cross fitting
 #' propensityScore(T, X, algo = "gbm", nfolds = 1)
 #' }
-#' 
+#'
 #' @export
 propensityScore <- function(T = NULL, X = NULL,
                             formula = NULL, data = NULL,
@@ -80,13 +80,13 @@ propensityScore <- function(T = NULL, X = NULL,
             logistic = score_LogisticReg,
             NULL)
     }
-    if (!is.function(algo) || !is.character(algo)){
+    if (!is.function(algo)){
         stop("algo must be a function or a valid string")
     }
     if (any(!c("T", "X", "trainid", "testid") %in% formalArgs(algo))){
         stop("'algo' must be a valid string or a function with inputs (at least) 'T', 'X', 'trainid' and 'testid'")
     }
-    
+
     if (is.null(T)){
         if (is.null(formula)){
             stop("Either 'T' or 'formula' should be specified")

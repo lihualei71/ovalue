@@ -2,7 +2,7 @@
 #'
 #' \code{ovalue} is a framework to calculate O-values of observational studies allowing for arbitrary classifiers to calculate 1-d scores.
 #'
-#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method. 
+#' @details \code{ovalue} provides a bunch of user-friendly wrappers and a flexible framework that allows for arbitrary classifiers. It also supports using multiple classifiers with each classifier being assigned a fraction of confidence budget. The argument \code{scorefuns} gives either one or multiple classifiers and the argument \code{sw} gives their weights. Specifically, the algorithm will assign \code{sw[i] / sum(sw)} fraction of confidence budget to the i-th method.
 #'
 #' Each element of \code{scorefuns} can be a valid string, including
 #' * "logistic" for logistic regression,
@@ -10,17 +10,17 @@
 #' * "gam" for generalized additive model,
 #' * "gbm" for generalized boosting machine,
 #' * "rf" for random forest,
-#' 
+#'
 #' or a function object whose inputs must include
 #' * "T" for treatment vector, must be a logical vector or a factor/vector encoded by 0 and 1,
 #' * "X" for covariates, must be a vector/matrix/data.frame,
 #' * "trainid" for the index of training samples, must be a logical vector or a vector of integers.
-#' * "testid" for the index of testing samples, must be a logical vector or a vector of integers. "testid" is allowed to overlap with "trainid". 
+#' * "testid" for the index of testing samples, must be a logical vector or a vector of integers. "testid" is allowed to overlap with "trainid".
 #' The default setting is \code{scorefuns = c("rf", "gbm"), sw = c(1, 1)}.
 #'
 #' \code{ovalue} supports two types of data inputs: (1) \code{T} and \code{X} or (2) \code{formula} and \code{data}. One of the pair has to be specified.
 #'
-#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test. 
+#' Similar to the classifiers, \code{ovalue} provides a bunch of testing methods and a flexible framework that allows for user-specified external testing methods. It also supports hybrid version of multiple testing methods with each method assigned a fraction of confidence budget. The argument \code{methods} gives either one or multiple testing methods and the argument \code{mw} gives their weights. Specifically, the algorithm will assign \code{mw[i] / sum(mw)} fraction of confidence budget to the i-th test.
 #'
 #' Each element of \code{methods} can be a valid string, including
 #' * "ROC" for ROC bound,
@@ -32,8 +32,8 @@
 #' * "delta" for the confidence level, must be a real number in \eqn{[0, 1]}.
 #' The default setting is \code{scorefuns = c("ROC", "EBenn"), sw = c(1, 1)}.
 #'
-#' Derandomization step is crucial to reduce the external randomness from data splitting. \code{ovalue} calculate O-values for \code{nreps} data splits and report the \code{drq}-th quantile. If the confidence level for each split is \eqn{$\beta$}, it is guaranteed that the coverage is at least \eqn{$\beta / drq$}. To guarantee the coverage in worst case, \code{ovalue} corrects \code{alpha} to \code{alpha} * \code{drq}, if \code{drcorrect = TRUE} by default. In practice, users might awant to avoid this level of correction because each O-value is conservative and the overall coverage will still be guaranteed even without the correction. 
-#' 
+#' Derandomization step is crucial to reduce the external randomness from data splitting. \code{ovalue} calculate O-values for \code{nreps} data splits and report the \code{drq}-th quantile. If the confidence level for each split is \eqn{$\beta$}, it is guaranteed that the coverage is at least \eqn{$\beta / drq$}. To guarantee the coverage in worst case, \code{ovalue} corrects \code{alpha} to \code{alpha} * \code{drq}, if \code{drcorrect = TRUE} by default. In practice, users might awant to avoid this level of correction because each O-value is conservative and the overall coverage will still be guaranteed even without the correction.
+#'
 #' @md
 #'
 #' @param T logical vector or a factor/vector encoded by 0 and 1. Treatment assignment
@@ -46,19 +46,19 @@
 #' @param sw vector of non-negative numbers. See Details
 #' @param methods vector of strings or functions. See Details
 #' @param mw vector of non-negative numbers. See Details
-#' @param datasplit logical. Indicate whether data splitting is performed. It should always be TRUE in all studies unless the goal is to study the property of O-values.
+#' @param datasplit logical. Indicate whether data splitting is performed.
 #' @param trainprop numeric. Proportion of training samples
 #' @param nreps an integer. Number of times for data splitting
 #' @param drq numeric. The quantile at which the O-values are reported. See Details
 #' @param drcorrect logical. Indicate whether the confidence level needs to be corrected for derandomization. See Details
 #' @param verbose logical. Indicate whether relevant information is outputted to the console
 #' @param return_list logical. Indicate whether the O-values for each split are returned.
-#' @param ... Other arguments passed into \code{scorefun}
+#' @param ... Other arguments passed into \code{scorefuns}
 #'
 #' @return
 #' \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
 #' \item{etalist}{ optional (only returned when \code{return_list = TRUE}). List of O-values for each splitted data. Each entry corresponds to a type of overlap condition.}
-#' 
+#'
 #' @examples
 #' \donttest{# Generate data from a logistic model
 #' set.seed(1)
@@ -66,19 +66,19 @@
 #' p <- 50
 #' X <- matrix(stats::rnorm(n * p), n, p)
 #' beta <- rep(1 / sqrt(p), p)
-#' probs <- 1 / (1 + exp(-X %*% beta))
+#' probs <- 1 / (1 + exp(-X \%*\% beta))
 #' T <- stats::runif(n) <= probs
 #' data <- data.frame(T = T, X)
 #'
 #' # Calculate the O-value with inputs \code{T} and \code{X}
 #' set.seed(1)
-#' ovalue(T, X, scorefun = "gbm")
+#' ovalue(T, X, scorefuns = "gbm")
 #'
 #' # Calculate the O-value with inputs \code{formula} and \code{data}
 #' set.seed(1)
-#' ovalue(formula = T ~ ., data = data, scorefun = "gbm")
+#' ovalue(formula = T ~ ., data = data, scorefuns = "gbm")
 #' }
-#' 
+#'
 #' @export
 ovalue <- function(T = NULL, X = NULL,
                    formula = NULL, data = NULL,
@@ -88,22 +88,22 @@ ovalue <- function(T = NULL, X = NULL,
                    sw = rep(1, length(scorefuns)),
                    methods = c("ROC", "EBenn"),
                    mw = rep(1, length(methods)),
-                   datasplit = TRUE,
+                   datasplit = FALSE,
                    trainprop = 0.5,
                    nreps = 50,
                    drq = 0.5,
-                   drcorrect = TRUE,
+                   drcorrect = FALSE,
                    verbose = TRUE,
                    return_list = FALSE,
                    ...){
     if (!datasplit){
-        cat("Warning: there is no theoretical guarantee on Type-I error control without data splitting. \n")
+        #cat("Warning: there is no theoretical guarantee on Type-I error control without data splitting. \n")
         nreps <- 1
     }
     if (drcorrect){
         alpha <- alpha * drq
     }
-    
+
     oldw <- getOption("warn")
     options(warn = -1)
     eta_gen_fun <- eta_hybrid(methods, mw)
@@ -168,7 +168,7 @@ ovalue <- function(T = NULL, X = NULL,
         }
     }
 
-    if (verbose){    
+    if (verbose){
         cat("\n")
     }
     if (nfails > 0){
@@ -182,7 +182,7 @@ ovalue <- function(T = NULL, X = NULL,
         })
         min(unlist(temp), eta0)
     })
-    
+
     if (return_list){
         return(c(eta, list(etalist = eta_list)))
     } else {

@@ -4,9 +4,17 @@
 \alias{propensityScore}
 \title{Propensity Score Estimation}
 \usage{
-propensityScore(T = NULL, X = NULL, formula = NULL, data = NULL,
-  nfolds = 1, foldsizes = NULL, foldid = NULL, algo = c("gbm",
-  "rf", "gam", "lasso", "logistic"), ...)
+propensityScore(
+  T = NULL,
+  X = NULL,
+  formula = NULL,
+  data = NULL,
+  nfolds = 1,
+  foldsizes = NULL,
+  foldid = NULL,
+  algo = c("gbm", "rf", "gam", "lasso", "logistic"),
+  ...
+)
 }
 \arguments{
 \item{T}{logical vector or factor/vector encoded by 0 and 1. Treatment assignment}

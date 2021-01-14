@@ -6,7 +6,7 @@ Authors@R: person("Lihua", "Lei", email = "lihua.lei@berkeley.edu", role = c("au
 Maintainer: Lihua Lei <lihua.lei@berkeley.edu>
 Description: A framework to calculate O-values of observational studies allowing for arbitrary classifiers 
     to calculate 1-d scores.
-Depends: R (>= 2.10)
+Depends: R (>= 3.5.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -21,7 +21,7 @@ Suggests:
     knitr,
     rmarkdown,
     dplyr
-RoxygenNote: 6.1.0
+RoxygenNote: 7.0.0
 Imports:
     exactci,
     methods,
