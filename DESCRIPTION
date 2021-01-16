@@ -1,11 +1,11 @@
 Package: ovalue
 Type: Package
-Title: O-values of Observational Studies
-Version: 0.1.0
-Authors@R: person("Lihua", "Lei", email = "lihua.lei@berkeley.edu", role = c("aut", "cre"))
-Maintainer: Lihua Lei <lihua.lei@berkeley.edu>
-Description: A framework to calculate O-values of observational studies allowing for arbitrary classifiers 
-    to calculate 1-d scores.
+Title: O-values for Observational Studies
+Version: 0.2.0
+Authors@R: c(person("Lihua", "Lei", email = "lihualei@stanford.edu", role = c("aut", "cre")),
+             person("Xiaoman", "Luo", email = "xmluo@ucdavis.edu", role = c("ctb")))  
+Maintainer: Lihua Lei <lihualei@stanford.edu>
+Description: Implementation of the framework of O-values as well as specific O-values (DiM, DiT, DiR, CE).
 Depends: R (>= 3.5.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -21,9 +21,10 @@ Suggests:
     knitr,
     rmarkdown,
     dplyr
-RoxygenNote: 7.0.0
+RoxygenNote: 7.0.2
 Imports:
     exactci,
     methods,
-    Rdpack
+    Rdpack,
+    zoo
 RdMacros: Rdpack

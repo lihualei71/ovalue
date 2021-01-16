@@ -49,7 +49,7 @@
 #' p <- 50
 #' X <- matrix(stats::rnorm(n * p), n, p)
 #' beta <- rep(1 / sqrt(p), p)
-#' probs <- 1 / (1 + exp(-X \%*\% beta))
+#' probs <- 1 / (1 + exp(-X %*% beta))
 #' T <- stats::runif(n) <= probs
 #' data <- data.frame(T = T, X)
 #'

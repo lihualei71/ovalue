@@ -40,6 +40,7 @@
 #' @param X matrix or data.frame. Covariate
 #' @param formula formula object. See Details
 #' @param data data.frame. See Details
+#' @param exact logical.
 #' @param alpha numeric. Confidence level
 #' @param type vector of strings. Types of overlap condition to be considered. Currently support "ATE", "ATT" and "ATC"
 #' @param scorefuns vector of strings or functions. See Details
@@ -53,7 +54,6 @@
 #' @param drcorrect logical. Indicate whether the confidence level needs to be corrected for derandomization. See Details
 #' @param verbose logical. Indicate whether relevant information is outputted to the console
 #' @param return_list logical. Indicate whether the O-values for each split are returned.
-#' @param ... Other arguments passed into \code{scorefuns}
 #'
 #' @return
 #' \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
@@ -66,7 +66,7 @@
 #' p <- 50
 #' X <- matrix(stats::rnorm(n * p), n, p)
 #' beta <- rep(1 / sqrt(p), p)
-#' probs <- 1 / (1 + exp(-X \%*\% beta))
+#' probs <- 1 / (1 + exp(-X %*% beta))
 #' T <- stats::runif(n) <= probs
 #' data <- data.frame(T = T, X)
 #'
@@ -82,23 +82,65 @@
 #' @export
 ovalue <- function(T = NULL, X = NULL,
                    formula = NULL, data = NULL,
+                   exact = TRUE,
                    alpha = 0.05,
                    type = c("ATE", "ATT", "ATC"),
                    scorefuns = c("rf", "gbm"),
                    sw = rep(1, length(scorefuns)),
-                   methods = c("ROC", "EBenn"),
+                   methods = "DiR",
                    mw = rep(1, length(methods)),
-                   datasplit = FALSE,
+                   datasplit = TRUE,
                    trainprop = 0.5,
                    nreps = 50,
                    drq = 0.5,
                    drcorrect = FALSE,
                    verbose = TRUE,
-                   return_list = FALSE,
-                   ...){
+                   return_list = FALSE){
+    if (exact){
+        ovalue_exact(T = T, X = X,
+                     formula = formula, data = data,
+                     alpha = alpha,
+                     type = type,
+                     scorefuns = scorefuns, sw = sw,
+                     methods = methods, mw = mw,
+                     datasplit = datasplit,
+                     trainprop = trainprop, nreps = nreps,
+                     drq = drq, drcorrect = drcorrect,
+                     verbose = verbose,
+                     return_list = return_list)
+    } else {
+        ovalue_inexact(T = T, X = X,
+                       formula = formula, data = data,
+                       type = type,
+                       scorefuns = scorefuns,
+                       methods = methods,
+                       datasplit = datasplit,
+                       trainprop = trainprop, nreps = nreps,
+                       drq = drq, 
+                       verbose = verbose,
+                       return_list = return_list)
+    }
+}
+
+ovalue_exact <- function(T = NULL, X = NULL,
+                         formula = NULL, data = NULL,
+                         alpha = 0.05,
+                         type = c("ATE", "ATT", "ATC"),
+                         scorefuns = c("rf", "gbm"),
+                         sw = rep(1, length(scorefuns)),
+                         methods = "DiR",
+                         mw = rep(1, length(methods)),
+                         datasplit = TRUE,
+                         trainprop = 0.5,
+                         nreps = 50,
+                         drq = 0.5,
+                         drcorrect = FALSE,
+                         verbose = TRUE,
+                         return_list = FALSE){
     if (!datasplit){
-        #cat("Warning: there is no theoretical guarantee on Type-I error control without data splitting. \n")
+        trainprop <- 1
         nreps <- 1
+        verbose <- FALSE
     }
     if (drcorrect){
         alpha <- alpha * drq
@@ -106,12 +148,17 @@ ovalue <- function(T = NULL, X = NULL,
 
     oldw <- getOption("warn")
     options(warn = -1)
-    eta_gen_fun <- eta_hybrid(methods, mw)
+    ovalue_gen_fun <- ovalue_method_hybrid(methods, mw, TRUE)
+    
+    if (is.function(scorefuns)){
+        scorefuns <- list(scorefuns)
+    }
     scorefuns <- lapply(scorefuns, clean_format_scorefun)
 
     if (is.null(T)){
         if (is.null(formula)){
-            stop("Either 'T' or 'formula' should be specified")
+            stop("Either 'T' or 'formula' should be specifie
+d")
         }
         if (is.null(data)){
             stop("'data' is not specified")
@@ -123,19 +170,22 @@ ovalue <- function(T = NULL, X = NULL,
     if (is.null(X)){
         stop("'X' is not specified")
     }
+    T <- clean_format_treat(T)
+    if (sum(T) == 0 || sum(1 - T) == 0){
+        stop("No treated or control units!")
+    }
     n <- length(T)
     ntrain <- ceiling(n * trainprop)
-    delta_gamma <- alpha / 10
-    delta_others <- (alpha - delta_gamma) * sw / sum(sw)
-    gamma_ci<- gamma_CI(T, delta_gamma)
-    eta0 <- gamma_ci$pi[2]
-    gamma_grid <- seq(gamma_ci$gamma[1], gamma_ci$gamma[2],
-                      length.out = 1000)
+    delta_pi <- alpha / 10
+    delta_others <- (alpha - delta_pi) * sw / sum(sw)
+    
+    pi_ci <- exactci::exactbinomCI(sum(T), n, conf.level = 1 - delta_pi)
+    ovalue_naive <- min(pi_ci[1] / (1 - pi_ci[1]), (1 - pi_ci[2]) / pi_ci[2], 0.5)    
 
-    eta_list <- list()
+    ovalue_list <- list()
     for (tp in type){
         for (j in 1:length(scorefuns)){
-            eta_list[[tp]][[j]] <- rep(NA, nreps)
+            ovalue_list[[tp]][[j]] <- rep(NA, nreps)
         }
     }
     nfails <- 0
@@ -143,6 +193,7 @@ ovalue <- function(T = NULL, X = NULL,
         cat("Computing O-values for each data splits\n")
         pb <- txtProgressBar(min = 0, max = nreps, style = 3, width = 50)
     }
+
     for (i in 1:nreps){
         if (datasplit){
             trainid <- sample(n, ntrain)
@@ -150,17 +201,26 @@ ovalue <- function(T = NULL, X = NULL,
         } else {
             trainid <- testid <- 1:n
         }
-        if (sum(T[trainid]) == 0 || sum(T[testid]) == 0){
+        if (sum(T[trainid]) == 0 ||
+            sum(T[testid]) == 0 ||
+            sum(1 - T[trainid]) == 0 ||
+            sum(1 - T[testid]) == 0){
             nfails <- nfails + 1
             next
         }
         for (j in 1:length(scorefuns)){
             scorefun <- scorefuns[[j]]
-            score <- scorefun(T, X, trainid, testid, ...)
+            score <- scorefun(T, X, trainid, testid)
             Ttest <- T[testid]
-            eta_fun <- eta_gen_fun(Ttest, score, delta_others[j])
+            score1 <- score[Ttest == 1]
+            score0 <- score[Ttest == 0]
+            ovalue_fun <- ovalue_gen_fun(score1, score0, delta_others[j])
             for (tp in type){
-                eta_list[[tp]][[j]][i] <- max(eta_fun(gamma_grid, tp))
+                ovalue <- -optimize(function(pi){-ovalue_fun(pi, tp)}, pi_ci)$objective
+                if (tp == "ATE"){
+                    ovalue <- min(ovalue, ovalue_naive)
+                }
+                ovalue_list[[tp]][[j]][i] <- ovalue
             }
         }
         if (verbose){
@@ -176,16 +236,134 @@ ovalue <- function(T = NULL, X = NULL,
         warning(paste0(nfails, " replicates involve only one class in the training or the testing set."))
     }
 
-    eta <- lapply(eta_list, function(x){
+    ovalue <- lapply(ovalue_list, function(x){
         temp <- lapply(x, function(y){
             quantile(y, drq, na.rm = TRUE)
         })
-        min(unlist(temp), eta0)
+        min(unlist(temp))
     })
 
     if (return_list){
-        return(c(eta, list(etalist = eta_list)))
+        return(c(ovalue, list(ovaluelist = ovalue_list)))
     } else {
-        return(eta)
+        return(ovalue)
+    }
+}
+
+ovalue_inexact <- function(T = NULL, X = NULL,
+                           formula = NULL, data = NULL,
+                           type = c("ATE", "ATT", "ATC"),
+                           scorefuns = c("rf", "gbm"),
+                           methods = c("DiM", "DiT", "DiR", "CE"),
+                           datasplit = TRUE,
+                           trainprop = 0.5,
+                           nreps = 50,
+                           drq = 0.5,
+                           verbose = TRUE,
+                           return_list = FALSE){
+    if (!datasplit){
+        trainprop <- 1
+        nreps <- 1
+        verbose <- FALSE
+    }
+    
+    oldw <- getOption("warn")
+    options(warn = -1)
+    ovalue_gen_fun <- ovalue_method_hybrid(methods, NULL, FALSE)
+
+    if (is.function(scorefuns)){
+        scorefuns <- list(scorefuns)
+    }
+    scorefuns <- lapply(scorefuns, clean_format_scorefun)
+
+    if (is.null(T)){
+        if (is.null(formula)){
+            stop("Either 'T' or 'formula' should be specifie
+d")
+        }
+        if (is.null(data)){
+            stop("'data' is not specified")
+        }
+        Tname <- as.character(formula[[2]])
+        T <- data[[Tname]]
+        X <- model.matrix(formula, data = data)
+    }
+    if (is.null(X)){
+        stop("'X' is not specified")
+    }
+    T <- clean_format_treat(T)
+    if (sum(T) == 0 || sum(1 - T) == 0){
+        stop("No treated or control units!")
+    }
+    n <- length(T)
+    ntrain <- ceiling(n * trainprop)    
+    pi <- sum(T) / n
+    ovalue_naive <- min(0.5, pi / (1 - pi), (1 - pi) / pi)
+
+    ovalue_list <- list()
+    for (tp in type){
+        for (j in 1:length(scorefuns)){
+            ovalue_list[[tp]][[j]] <- rep(NA, nreps)
+        }
+    }
+    nfails <- 0
+    if (verbose){
+        cat("Computing O-values for each data splits\n")
+        pb <- txtProgressBar(min = 0, max = nreps, style = 3, width = 50)
+    }
+
+    for (i in 1:nreps){
+        if (datasplit){
+            trainid <- sample(n, ntrain)
+            testid <- setdiff(1:n, trainid)
+        } else {
+            trainid <- testid <- 1:n
+        }
+        if (sum(T[trainid]) == 0 ||
+            sum(T[testid]) == 0 ||
+            sum(1 - T[trainid]) == 0 ||
+            sum(1 - T[testid]) == 0){
+            nfails <- nfails + 1
+            next
+        }
+        for (j in 1:length(scorefuns)){
+            scorefun <- scorefuns[[j]]
+            score <- scorefun(T, X, trainid, testid)
+            Ttest <- T[testid]
+            score1 <- score[Ttest == 1]
+            score0 <- score[Ttest == 0]
+            ovalue_fun <- ovalue_gen_fun(score1, score0)
+            for (tp in type){
+                ovalue <- ovalue_fun(pi, tp)
+                if (tp == "ATE"){
+                    ovalue <- min(ovalue, ovalue_naive)
+                }
+                ovalue_list[[tp]][[j]][i] <- ovalue
+            }
+        }
+        if (verbose){
+            setTxtProgressBar(pb, i)
+        }
+    }
+
+    if (verbose){
+        cat("\n")
+    }
+    if (nfails > 0){
+        options(warn = oldw)
+        warning(paste0(nfails, " replicates involve only one class in the training or the testing set."))
+    }
+
+    ovalue <- lapply(ovalue_list, function(x){
+        temp <- lapply(x, function(y){
+            quantile(y, drq, na.rm = TRUE)
+        })
+        min(unlist(temp))
+    })
+
+    if (return_list){
+        return(c(ovalue, list(ovaluelist = ovalue_list)))
+    } else {
+        return(ovalue)
     }
 }

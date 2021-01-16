@@ -9,20 +9,20 @@ ovalue(
   X = NULL,
   formula = NULL,
   data = NULL,
+  exact = TRUE,
   alpha = 0.05,
   type = c("ATE", "ATT", "ATC"),
   scorefuns = c("rf", "gbm"),
   sw = rep(1, length(scorefuns)),
-  methods = c("ROC", "EBenn"),
+  methods = "DiR",
   mw = rep(1, length(methods)),
-  datasplit = FALSE,
+  datasplit = TRUE,
   trainprop = 0.5,
   nreps = 50,
   drq = 0.5,
   drcorrect = FALSE,
   verbose = TRUE,
-  return_list = FALSE,
-  ...
+  return_list = FALSE
 )
 }
 \arguments{
@@ -33,6 +33,8 @@ ovalue(
 \item{formula}{formula object. See Details}
 
 \item{data}{data.frame. See Details}
+
+\item{exact}{logical.}
 
 \item{alpha}{numeric. Confidence level}
 
@@ -59,8 +61,6 @@ ovalue(
 \item{verbose}{logical. Indicate whether relevant information is outputted to the console}
 
 \item{return_list}{logical. Indicate whether the O-values for each split are returned.}
-
-\item{...}{Other arguments passed into \code{scorefuns}}
 }
 \value{
 \item{ATE/ATT/ATC}{ median of O-values for all splitted data for ATE/ATT/ATC.}
