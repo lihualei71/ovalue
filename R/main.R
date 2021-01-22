@@ -185,7 +185,13 @@ d")
     delta_others <- (alpha - delta_pi) * sw / sum(sw)
     
     pi_ci <- exactci::exactbinomCI(sum(T), n, conf.level = 1 - delta_pi)
-    ovalue_naive <- min(pi_ci[1] / (1 - pi_ci[1]), (1 - pi_ci[2]) / pi_ci[2], 0.5)    
+    if (pi_ci[1] > 0.5){
+        ovalue_naive <- 1 - pi_ci[2]
+    } else if (pi_ci[2] < 0.5){
+        ovalue_naive <- pi_ci[2]
+    } else {
+        ovalue_naive <- 0.5
+    }
 
     ovalue_list <- list()
     for (tp in type){
@@ -306,7 +312,7 @@ d")
     n <- length(T)
     ntrain <- ceiling(n * trainprop)    
     pi <- sum(T) / n
-    ovalue_naive <- min(0.5, pi / (1 - pi), (1 - pi) / pi)
+    ovalue_naive <- min(pi, 1 - pi)
 
     ovalue_list <- list()
     for (tp in type){
