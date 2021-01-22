@@ -11,6 +11,9 @@ dempster <- function(n, a, b){
 }
 
 dempster_lower_beta1 <- function(n, alpha, beta0){
+    if (beta0 > 1){
+        return(0)
+    }
     find_beta1 <- function(beta1){
         a <- (beta0 + beta1) / (1 + beta1)
         b <- beta0
@@ -77,7 +80,7 @@ dempster_upper <- function(x, alpha, turn = 5){
 simes_upper <- function(x, alpha, kfrac = 0.5){
     x <- sort(x)
     n <- length(x)
-    k <- floor(kfrac * n)
+    k <- ceiling(kfrac * n)
     fac1 <- log(alpha) / k - mean(log((n - k + 1):n))
     fac2 <- zoo::rollmean(log(1:n), k)
     bseq <- c(1 - exp(rev(fac2 + fac1)), rep(1, k))
@@ -103,7 +106,7 @@ DiT_ovalue_exact <- function(score1, score0, delta,
     n1 <- length(score1)
     n0 <- length(score0)
     delta <- delta / 8
-    
+
     score1_left <- pmin(score1 + 1e-10 * runif(n1), 1)
     score1_right <- pmin(1 - score1 + 1e-10 * runif(n1), 1)
     score0_left <- pmin(score0 + 1e-10 * runif(n0), 1)
@@ -126,7 +129,7 @@ DiT_ovalue_exact <- function(score1, score0, delta,
     ATTC_F0_right_upper <- hybrid_upper(score0_right, delta * 2, kfrac, turn)
     ATTC_F1_right_lower <- dempster_lower(score1_right, delta * 2, turn)
     ATTC_F0_right_lower <- dempster_lower(score0_right, delta * 2, turn)    
-    
+
     ovalue_fun <- function(pi, type){
         x_left <- c(score1_left, score0_left)
         x_right <- c(score1_right, score0_right)        

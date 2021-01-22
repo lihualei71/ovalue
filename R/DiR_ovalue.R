@@ -41,12 +41,16 @@ ustat_maurer_upper <- function(mu, x, n, k){
 #' @param alpha confidence level
 #' 
 HBM_U_upper <- function(U, n, alpha){
+    U <- pmin(pmax(U, 1e-10), 1-1e-10)
     m <- floor(n / 2)
     tailprob <- function(EU){
         hoeffding_EU <- ustat_hoeffding_upper(EU, U, n, 2)
         bentkus_EU <- ustat_bentkus_upper(EU, U, n, 2)
         maurer_EU <- ustat_maurer_upper(EU, U, n, 2)
         min(hoeffding_EU, bentkus_EU, maurer_EU) - log(alpha)
+    }
+    if (is.nan(tailprob(1 - 1e-4))){
+        browser()
     }
     if (tailprob(1 - 1e-4) > 0){
         1

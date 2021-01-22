@@ -175,7 +175,12 @@ d")
         stop("No treated or control units!")
     }
     n <- length(T)
-    ntrain <- ceiling(n * trainprop)
+    id1 <- which(T == 1)
+    id0 <- which(T == 0)
+    n1 <- length(id1)
+    n0 <- length(id0)
+    n1train <- ceiling(n1 * trainprop)
+    n0train <- ceiling(n0 * trainprop)
     delta_pi <- alpha / 10
     delta_others <- (alpha - delta_pi) * sw / sum(sw)
     
@@ -195,8 +200,11 @@ d")
     }
 
     for (i in 1:nreps){
-        if (datasplit){
-            trainid <- sample(n, ntrain)
+        if (datasplit){            
+            ## trainid <- sample(n, ntrain)
+            trainid1 <- sample(id1, n1train)
+            trainid0 <- sample(id0, n0train)
+            trainid <- c(trainid1, trainid0)
             testid <- setdiff(1:n, trainid)
         } else {
             trainid <- testid <- 1:n
