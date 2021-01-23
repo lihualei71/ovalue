@@ -49,6 +49,26 @@ dempster_lower <- function(x, alpha, turn = 5){
     }
 }
 
+## DKWM lower confidence band of F(x)
+DKWM_lower <- function(x, alpha){
+    n <- length(x)
+    correct <- sqrt(log(1 / alpha) / 2 / n)
+    function(y){
+        pmax(fast_ecdf(x, y) - correct, 0)
+    }
+}
+
+## Hybrid upper confidence band of F(x)
+hybrid_lower <- function(x, alpha, turn = 5){
+    alpha <- alpha / 2
+    dempster_fun <- dempster_lower(x, alpha, turn)
+    DKWM_fun <- DKWM_lower(x, alpha)
+    function(y){
+        pmax(dempster_fun(y), DKWM_fun(y))
+    }
+}
+
+## dempster upper confidence band of F(x)
 dempster_upper_beta1 <- function(n, alpha, beta0){
     find_beta1 <- function(beta1){
         a <- beta0 / (1 - beta1)
@@ -90,12 +110,22 @@ simes_upper <- function(x, alpha, kfrac = 0.5){
     }
 }
 
+## DKWM upper confidence band of F(x)
+DKWM_upper <- function(x, alpha){
+    n <- length(x)
+    correct <- sqrt(log(1 / alpha) / 2 / n)
+    function(y){
+        pmin(fast_ecdf(x, y) + correct, 1)
+    }
+}
+
 ## Hybrid upper confidence band of F(x)
 hybrid_upper <- function(x, alpha, kfrac = 0.5, turn = 5){
-    dempster_fun <- dempster_upper(x, alpha / 2, turn)
-    simes_fun <- simes_upper(x, alpha / 2, kfrac)
+    alpha <- alpha
+    dempster_fun <- dempster_upper(x, alpha, turn)
+    simes_fun <- simes_upper(x, alpha, kfrac)
     function(y){
-        pmin(dempster_fun(y), simes_fun(y))
+        pmin(simes_fun(y), DKWM_fun(y))
     }
 }
 
@@ -112,23 +142,23 @@ DiT_ovalue_exact <- function(score1, score0, delta,
     score0_left <- pmin(score0 + 1e-10 * runif(n0), 1)
     score0_right <- pmin(1 - score0 + 1e-10 * runif(n0), 1)
 
-    ATE_F1_left_upper <- hybrid_upper(score1_left, delta, kfrac, turn)
-    ATE_F0_left_upper <- hybrid_upper(score0_left, delta, kfrac, turn)
-    ATE_F1_left_lower <- dempster_lower(score1_left, delta, turn)
-    ATE_F0_left_lower <- dempster_lower(score0_left, delta, turn)
-    ATE_F1_right_upper <- hybrid_upper(score1_right, delta, kfrac, turn)
-    ATE_F0_right_upper <- hybrid_upper(score0_right, delta, kfrac, turn)
-    ATE_F1_right_lower <- dempster_lower(score1_right, delta, turn)
-    ATE_F0_right_lower <- dempster_lower(score0_right, delta, turn)    
+    ATE_F1_left_upper <- simes_upper(score1_left, delta, kfrac, turn)
+    ATE_F0_left_upper <- simes_upper(score0_left, delta, kfrac, turn)
+    ATE_F1_left_lower <- hybrid_lower(score1_left, delta, turn)
+    ATE_F0_left_lower <- hybrid_lower(score0_left, delta, turn)
+    ATE_F1_right_upper <- simes_upper(score1_right, delta, kfrac, turn)
+    ATE_F0_right_upper <- simes_upper(score0_right, delta, kfrac, turn)
+    ATE_F1_right_lower <- hybrid_lower(score1_right, delta, turn)
+    ATE_F0_right_lower <- hybrid_lower(score0_right, delta, turn)    
 
-    ATTC_F1_left_upper <- hybrid_upper(score1_left, delta * 2, kfrac, turn)
-    ATTC_F0_left_upper <- hybrid_upper(score0_left, delta * 2, kfrac, turn)
-    ATTC_F1_left_lower <- dempster_lower(score1_left, delta * 2, turn)
-    ATTC_F0_left_lower <- dempster_lower(score0_left, delta * 2, turn)
-    ATTC_F1_right_upper <- hybrid_upper(score1_right, delta * 2, kfrac, turn)
-    ATTC_F0_right_upper <- hybrid_upper(score0_right, delta * 2, kfrac, turn)
-    ATTC_F1_right_lower <- dempster_lower(score1_right, delta * 2, turn)
-    ATTC_F0_right_lower <- dempster_lower(score0_right, delta * 2, turn)    
+    ATTC_F1_left_upper <- simes_upper(score1_left, delta * 2, kfrac, turn)
+    ATTC_F0_left_upper <- simes_upper(score0_left, delta * 2, kfrac, turn)
+    ATTC_F1_left_lower <- hybrid_lower(score1_left, delta * 2, turn)
+    ATTC_F0_left_lower <- hybrid_lower(score0_left, delta * 2, turn)
+    ATTC_F1_right_upper <- simes_upper(score1_right, delta * 2, kfrac, turn)
+    ATTC_F0_right_upper <- simes_upper(score0_right, delta * 2, kfrac, turn)
+    ATTC_F1_right_lower <- hybrid_lower(score1_right, delta * 2, turn)
+    ATTC_F0_right_lower <- hybrid_lower(score0_right, delta * 2, turn)    
 
     ovalue_fun <- function(pi, type){
         x_left <- c(score1_left, score0_left)
