@@ -4,7 +4,9 @@
 \name{lalonde}
 \alias{lalonde}
 \title{Lalonde data with external controls}
-\format{An object of class \code{list} of length 7.}
+\format{
+An object of class \code{list} of length 7.
+}
 \usage{
 lalonde
 }

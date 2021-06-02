@@ -92,7 +92,7 @@ dempster_upper <- function(x, alpha, turn = 5){
     beta1 <- dempster_upper_beta1(n, alpha, beta0)
     function(y){
         ecdf <- fast_ecdf(x, y)
-        pmax((ecdf + beta0) / (1 - beta1), 1)
+        pmin((ecdf + beta0) / (1 - beta1), 1)
     }
 }
 
@@ -121,11 +121,12 @@ DKWM_upper <- function(x, alpha){
 
 ## Hybrid upper confidence band of F(x)
 hybrid_upper <- function(x, alpha, kfrac = 0.5, turn = 5){
-    alpha <- alpha
-    dempster_fun <- dempster_upper(x, alpha, turn)
+    alpha <- alpha / 2
+    ## dempster_fun <- dempster_upper(x, alpha, turn)
+    DKWM_fun <- DKWM_upper(x, alpha)    
     simes_fun <- simes_upper(x, alpha, kfrac)
     function(y){
-        pmin(dempster_fun(y), simes_fun(y))
+        pmin(DKWM_fun(y), simes_fun(y))
     }
 }
 
