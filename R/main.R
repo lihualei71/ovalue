@@ -186,7 +186,7 @@ d")
     
     pi_ci <- exactci::exactbinomCI(sum(T), n, conf.level = 1 - delta_pi)
     if (pi_ci[1] > 0.5){
-        ovalue_naive <- 1 - pi_ci[2]
+        ovalue_naive <- 1 - pi_ci[1]
     } else if (pi_ci[2] < 0.5){
         ovalue_naive <- pi_ci[2]
     } else {
