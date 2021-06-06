@@ -120,8 +120,7 @@ CE_ovalue_exact_devroye <- function(score1, score0, delta,
 
 ## Exact CE O-value
 CE_ovalue_exact <- function(score1, score0, delta,
-                            kfrac = 0.5,
-                            turn = 5){
+                            kfrac = 0.5){
     n1 <- length(score1)
     n0 <- length(score0)
     n <- n1 + n0
@@ -130,8 +129,8 @@ CE_ovalue_exact <- function(score1, score0, delta,
     score1 <- pmin(score1 + 1e-10 * runif(n1), 1)
     score0 <- pmin(score0 + 1e-10 * runif(n0), 1)
 
-    class_err1 <- hybrid_upper(score1, delta, kfrac, turn)
-    class_err0 <- hybrid_upper(1 - score0, delta, kfrac, turn)
+    class_err1 <- hybrid_upper(score1, delta, kfrac)
+    class_err0 <- hybrid_upper(1 - score0, delta, kfrac)
     cutoff_list <- c(score1, score0)
     
     ovalue_fun <- function(pi, type){

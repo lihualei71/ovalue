@@ -117,9 +117,9 @@ find_posit_vec <- function(vec, target, dir, decreasing = TRUE){
 }
 
 fast_ecdf <- function(x, testx){
-    find_posit_vec(testx + 1e-10, x, "left", FALSE) / length(x)
+    find_posit_vec(testx, x, "left", FALSE) / length(x)
 }
 
 fast_rank <- function(x, testx){
-    find_posit_vec(testx + 1e-10, x, "left", FALSE)
+    find_posit_vec(testx, x, "left", FALSE)
 }
